@@ -81,7 +81,7 @@ It does not mount source code and does not expose internal gRPC/debug ports.
 
 Workflow file: `.github/workflows/prod.yml`
 
-- On push to `main`: build and push all service images to GHCR with tags:
+- On push to `main`: build and push all service images to GHCR and Docker Hub with tags:
   - `sha-<commit_sha>`
   - `latest`
 - Manual deploy: run the workflow with `deploy=true` to deploy over SSH.
@@ -93,6 +93,8 @@ Required repository secrets:
 - `DEPLOY_SSH_KEY`
 - `DEPLOY_PORT` (optional, defaults to `22`)
 - `DEPLOY_PATH` (absolute path on server where repo and `.env.prod` exist)
+- `DOCKERHUB_USERNAME`
+- `DOCKERHUB_TOKEN`
 
 ## Runbook 6 Lenh
 
