@@ -1,0 +1,41 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "docker: up infra stack",
+      "type": "shell",
+      "command": "docker compose --env-file .env.local -f infra/docker-compose.yml up -d --build",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "docker: down infra stack",
+      "type": "shell",
+      "command": "docker compose --env-file .env.local -f infra/docker-compose.yml down",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "docker: logs infra stack",
+      "type": "shell",
+      "command": "docker compose --env-file .env.local -f infra/docker-compose.yml logs -f",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "docker: restart infra stack",
+      "type": "shell",
+      "command": "docker compose --env-file .env.local -f infra/docker-compose.yml down && docker compose --env-file .env.local -f infra/docker-compose.yml up -d --build",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    }
+  ]
+}

@@ -26,6 +26,10 @@
     },
     {
       "path": "proto-contracts"
+    },
+    {
+      "name": "root",
+      "path": "."
     }
   ],
   "settings": {

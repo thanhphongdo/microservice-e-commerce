@@ -3,46 +3,71 @@ services:
     image: confluentinc/cp-zookeeper:7.6.1
     container_name: zookeeper
     environment:
-      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_CLIENT_PORT: ${ZOOKEEPER_CLIENT_PORT}
       ZOOKEEPER_TICK_TIME: 2000
     ports:
-      - '12181:2181'
+      - '${ZOOKEEPER_EXTERNAL_PORT}:${ZOOKEEPER_CLIENT_PORT}'
+    healthcheck:
+      test: ['CMD-SHELL', 'echo srvr | nc -w 2 localhost 2181 | grep Mode || exit 1']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
 
   kafka:
     image: confluentinc/cp-kafka:7.6.1
     container_name: kafka
     depends_on:
-      - zookeeper
+      zookeeper:
+        condition: service_healthy
     environment:
       KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:${ZOOKEEPER_CLIENT_PORT}
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092,PLAINTEXT_HOST://0.0.0.0:9092
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:19092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:${KAFKA_EXTERNAL_PORT}
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
     ports:
-      - '19092:9092'
+      - '${KAFKA_EXTERNAL_PORT}:9092'
+    healthcheck:
+      test: ['CMD-SHELL', 'nc -z localhost 29092 || exit 1']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
 
   postgres:
     image: postgres:17-alpine
     container_name: postgres
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: ecommerce
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     ports:
-      - '15432:5432'
+      - '${POSTGRES_HOST_PORT}:${POSTGRES_PORT}'
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
 
   redis:
     image: redis:7-alpine
     container_name: redis
     ports:
-      - '16379:6379'
+      - '${REDIS_HOST_PORT}:${REDIS_PORT}'
     volumes:
       - redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
 
   auth-service:
     build:
@@ -50,21 +75,24 @@ services:
       dockerfile: Dockerfile
     container_name: auth-service
     depends_on:
-      - kafka
-      - postgres
-      - redis
+      kafka:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     environment:
-      NODE_ENV: development
-      GRPC_URL: 0.0.0.0:50051
-      DEBUG_PORT: 9229
-      KAFKA_BROKER: kafka:29092
-      POSTGRES_HOST: postgres
-      POSTGRES_PORT: 5432
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
+      NODE_ENV: ${NODE_ENV}
+      GRPC_URL: 0.0.0.0:${AUTH_GRPC_PORT}
+      DEBUG_PORT: ${NODE_DEBUG_PORT}
+      KAFKA_BROKER: ${KAFKA_BROKER}
+      POSTGRES_HOST: ${POSTGRES_HOST}
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
     ports:
-      - '15051:50051'
-      - '19229:9229'
+      - '${AUTH_HOST_PORT}:${AUTH_GRPC_PORT}'
+      - '${AUTH_DEBUG_PORT}:${NODE_DEBUG_PORT}'
     volumes:
       - ../auth-service:/usr/src/app
       - ../proto-contracts:/usr/src/proto-contracts:ro
@@ -80,21 +108,24 @@ services:
       dockerfile: Dockerfile
     container_name: payment-service
     depends_on:
-      - kafka
-      - postgres
-      - redis
+      kafka:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     environment:
-      NODE_ENV: development
-      GRPC_URL: 0.0.0.0:50052
-      DEBUG_PORT: 9229
-      KAFKA_BROKER: kafka:29092
-      POSTGRES_HOST: postgres
-      POSTGRES_PORT: 5432
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
+      NODE_ENV: ${NODE_ENV}
+      GRPC_URL: 0.0.0.0:${PAYMENT_GRPC_PORT}
+      DEBUG_PORT: ${NODE_DEBUG_PORT}
+      KAFKA_BROKER: ${KAFKA_BROKER}
+      POSTGRES_HOST: ${POSTGRES_HOST}
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
     ports:
-      - '15052:50052'
-      - '29229:9229'
+      - '${PAYMENT_HOST_PORT}:${PAYMENT_GRPC_PORT}'
+      - '${PAYMENT_DEBUG_PORT}:${NODE_DEBUG_PORT}'
     volumes:
       - ../payment-service:/usr/src/app
       - ../proto-contracts:/usr/src/proto-contracts:ro
@@ -110,21 +141,24 @@ services:
       dockerfile: Dockerfile
     container_name: order-service
     depends_on:
-      - kafka
-      - postgres
-      - redis
+      kafka:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     environment:
-      NODE_ENV: development
-      GRPC_URL: 0.0.0.0:50053
-      DEBUG_PORT: 9229
-      KAFKA_BROKER: kafka:29092
-      POSTGRES_HOST: postgres
-      POSTGRES_PORT: 5432
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
+      NODE_ENV: ${NODE_ENV}
+      GRPC_URL: 0.0.0.0:${ORDER_GRPC_PORT}
+      DEBUG_PORT: ${NODE_DEBUG_PORT}
+      KAFKA_BROKER: ${KAFKA_BROKER}
+      POSTGRES_HOST: ${POSTGRES_HOST}
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
     ports:
-      - '15053:50053'
-      - '39229:9229'
+      - '${ORDER_HOST_PORT}:${ORDER_GRPC_PORT}'
+      - '${ORDER_DEBUG_PORT}:${NODE_DEBUG_PORT}'
     volumes:
       - ../order-service:/usr/src/app
       - ../proto-contracts:/usr/src/proto-contracts:ro
@@ -140,21 +174,24 @@ services:
       dockerfile: Dockerfile
     container_name: product-service
     depends_on:
-      - kafka
-      - postgres
-      - redis
+      kafka:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     environment:
-      NODE_ENV: development
-      GRPC_URL: 0.0.0.0:50054
-      DEBUG_PORT: 9229
-      KAFKA_BROKER: kafka:29092
-      POSTGRES_HOST: postgres
-      POSTGRES_PORT: 5432
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
+      NODE_ENV: ${NODE_ENV}
+      GRPC_URL: 0.0.0.0:${PRODUCT_GRPC_PORT}
+      DEBUG_PORT: ${NODE_DEBUG_PORT}
+      KAFKA_BROKER: ${KAFKA_BROKER}
+      POSTGRES_HOST: ${POSTGRES_HOST}
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
     ports:
-      - '15054:50054'
-      - '49229:9229'
+      - '${PRODUCT_HOST_PORT}:${PRODUCT_GRPC_PORT}'
+      - '${PRODUCT_DEBUG_PORT}:${NODE_DEBUG_PORT}'
     volumes:
       - ../product-service:/usr/src/app
       - ../proto-contracts:/usr/src/proto-contracts:ro
@@ -170,29 +207,36 @@ services:
       dockerfile: Dockerfile
     container_name: bff-gateway
     depends_on:
-      - auth-service
-      - payment-service
-      - order-service
-      - product-service
-      - kafka
-      - postgres
-      - redis
+      auth-service:
+        condition: service_started
+      payment-service:
+        condition: service_started
+      order-service:
+        condition: service_started
+      product-service:
+        condition: service_started
+      kafka:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     environment:
-      NODE_ENV: development
-      PORT: 3000
-      DEBUG_PORT: 9229
-      AUTH_GRPC_URL: auth-service:50051
-      PAYMENT_GRPC_URL: payment-service:50052
-      ORDER_GRPC_URL: order-service:50053
-      PRODUCT_GRPC_URL: product-service:50054
-      KAFKA_BROKER: kafka:29092
-      POSTGRES_HOST: postgres
-      POSTGRES_PORT: 5432
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
+      NODE_ENV: ${NODE_ENV}
+      PORT: ${BFF_PORT}
+      DEBUG_PORT: ${NODE_DEBUG_PORT}
+      AUTH_GRPC_URL: auth-service:${AUTH_GRPC_PORT}
+      PAYMENT_GRPC_URL: payment-service:${PAYMENT_GRPC_PORT}
+      ORDER_GRPC_URL: order-service:${ORDER_GRPC_PORT}
+      PRODUCT_GRPC_URL: product-service:${PRODUCT_GRPC_PORT}
+      KAFKA_BROKER: ${KAFKA_BROKER}
+      POSTGRES_HOST: ${POSTGRES_HOST}
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
     ports:
-      - '13000:3000'
-      - '59229:9229'
+      - '${BFF_HOST_PORT}:${BFF_PORT}'
+      - '${BFF_DEBUG_PORT}:${NODE_DEBUG_PORT}'
     volumes:
       - ../bff-gateway:/usr/src/app
       - ../proto-contracts:/usr/src/proto-contracts:ro

@@ -1,0 +1,87 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Attach: bff-gateway",
+      "type": "node",
+      "request": "attach",
+      "address": "localhost",
+      "port": 59229,
+      "restart": true,
+      "protocol": "inspector",
+      "localRoot": "${workspaceFolder}/bff-gateway",
+      "remoteRoot": "/usr/src/app",
+      "skipFiles": [
+        "<node_internals>/**"
+      ]
+    },
+    {
+      "name": "Attach: auth-service",
+      "type": "node",
+      "request": "attach",
+      "address": "localhost",
+      "port": 19229,
+      "restart": true,
+      "protocol": "inspector",
+      "localRoot": "${workspaceFolder}/auth-service",
+      "remoteRoot": "/usr/src/app",
+      "skipFiles": [
+        "<node_internals>/**"
+      ]
+    },
+    {
+      "name": "Attach: payment-service",
+      "type": "node",
+      "request": "attach",
+      "address": "localhost",
+      "port": 29229,
+      "restart": true,
+      "protocol": "inspector",
+      "localRoot": "${workspaceFolder}/payment-service",
+      "remoteRoot": "/usr/src/app",
+      "skipFiles": [
+        "<node_internals>/**"
+      ]
+    },
+    {
+      "name": "Attach: order-service",
+      "type": "node",
+      "request": "attach",
+      "address": "localhost",
+      "port": 39229,
+      "restart": true,
+      "protocol": "inspector",
+      "localRoot": "${workspaceFolder}/order-service",
+      "remoteRoot": "/usr/src/app",
+      "skipFiles": [
+        "<node_internals>/**"
+      ]
+    },
+    {
+      "name": "Attach: product-service",
+      "type": "node",
+      "request": "attach",
+      "address": "localhost",
+      "port": 49229,
+      "restart": true,
+      "protocol": "inspector",
+      "localRoot": "${workspaceFolder}/product-service",
+      "remoteRoot": "/usr/src/app",
+      "skipFiles": [
+        "<node_internals>/**"
+      ]
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Attach: all services",
+      "configurations": [
+        "Attach: bff-gateway",
+        "Attach: auth-service",
+        "Attach: payment-service",
+        "Attach: order-service",
+        "Attach: product-service"
+      ]
+    }
+  ]
+}
