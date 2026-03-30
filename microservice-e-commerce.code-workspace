@@ -1,0 +1,39 @@
+{
+  "folders": [
+    {
+      "name": "auth-service",
+      "path": "auth-service"
+    },
+    {
+      "name": "payment-service",
+      "path": "payment-service"
+    },
+    {
+      "name": "order-service",
+      "path": "order-service"
+    },
+    {
+      "name": "product-service",
+      "path": "product-service"
+    },
+    {
+      "name": "bff-gateway",
+      "path": "bff-gateway"
+    },
+    {
+      "name": "infra",
+      "path": "infra"
+    },
+    {
+      "path": "proto-contracts"
+    }
+  ],
+  "settings": {
+    "files.exclude": {
+      "**/.git": true,
+      "**/node_modules": true,
+      "**/dist": true,
+      "**/coverage": true
+    }
+  }
+}

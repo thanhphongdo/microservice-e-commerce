@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package auth;
+
+service AuthService {
+  rpc GetStatus (Empty) returns (StatusResponse);
+}
+
+message Empty {}
+
+message StatusResponse {
+  string service = 1;
+  string status = 2;
+}
