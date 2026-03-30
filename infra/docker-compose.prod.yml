@@ -1,0 +1,158 @@
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.6.1
+    restart: unless-stopped
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - backend
+
+  kafka:
+    image: confluentinc/cp-kafka:7.6.1
+    restart: unless-stopped
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    networks:
+      - backend
+
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - backend
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    networks:
+      - backend
+
+  auth-service:
+    image: ${AUTH_IMAGE}
+    restart: unless-stopped
+    depends_on:
+      - kafka
+      - postgres
+      - redis
+    environment:
+      NODE_ENV: production
+      GRPC_URL: 0.0.0.0:50051
+      KAFKA_BROKER: ${KAFKA_BROKER:-kafka:29092}
+      POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+    expose:
+      - "50051"
+    networks:
+      - backend
+
+  payment-service:
+    image: ${PAYMENT_IMAGE}
+    restart: unless-stopped
+    depends_on:
+      - kafka
+      - postgres
+      - redis
+    environment:
+      NODE_ENV: production
+      GRPC_URL: 0.0.0.0:50052
+      KAFKA_BROKER: ${KAFKA_BROKER:-kafka:29092}
+      POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+    expose:
+      - "50052"
+    networks:
+      - backend
+
+  order-service:
+    image: ${ORDER_IMAGE}
+    restart: unless-stopped
+    depends_on:
+      - kafka
+      - postgres
+      - redis
+    environment:
+      NODE_ENV: production
+      GRPC_URL: 0.0.0.0:50053
+      KAFKA_BROKER: ${KAFKA_BROKER:-kafka:29092}
+      POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+    expose:
+      - "50053"
+    networks:
+      - backend
+
+  product-service:
+    image: ${PRODUCT_IMAGE}
+    restart: unless-stopped
+    depends_on:
+      - kafka
+      - postgres
+      - redis
+    environment:
+      NODE_ENV: production
+      GRPC_URL: 0.0.0.0:50054
+      KAFKA_BROKER: ${KAFKA_BROKER:-kafka:29092}
+      POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+    expose:
+      - "50054"
+    networks:
+      - backend
+
+  bff-gateway:
+    image: ${BFF_IMAGE}
+    restart: unless-stopped
+    depends_on:
+      - auth-service
+      - payment-service
+      - order-service
+      - product-service
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      AUTH_GRPC_URL: auth-service:50051
+      PAYMENT_GRPC_URL: payment-service:50052
+      ORDER_GRPC_URL: order-service:50053
+      PRODUCT_GRPC_URL: product-service:50054
+      KAFKA_BROKER: ${KAFKA_BROKER:-kafka:29092}
+      POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+    ports:
+      - "${BFF_PUBLIC_PORT:-3000}:3000"
+    networks:
+      - backend
+
+networks:
+  backend:
+
+volumes:
+  postgres_data:
+  redis_data:

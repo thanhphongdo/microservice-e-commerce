@@ -40,6 +40,60 @@ Local development standard: use `.env.local` as the single source of truth for D
    docker compose --env-file .env.local -f infra/docker-compose.yml down
    ```
 
+## Production Compose
+
+`infra/docker-compose.prod.yml` is for production-like deployment with prebuilt images.
+It does not mount source code and does not expose internal gRPC/debug ports.
+
+1. Prepare a production env file (example: `.env.prod`) with at least:
+
+   ```bash
+   POSTGRES_USER=postgres
+   POSTGRES_PASSWORD=replace-me
+   POSTGRES_DB=ecommerce
+   AUTH_IMAGE=ghcr.io/your-org/auth-service:latest
+   PAYMENT_IMAGE=ghcr.io/your-org/payment-service:latest
+   ORDER_IMAGE=ghcr.io/your-org/order-service:latest
+   PRODUCT_IMAGE=ghcr.io/your-org/product-service:latest
+   BFF_IMAGE=ghcr.io/your-org/bff-gateway:latest
+   BFF_PUBLIC_PORT=3000
+   ```
+
+2. Validate config:
+
+   ```bash
+   docker compose --env-file .env.prod -f infra/docker-compose.prod.yml config
+   ```
+
+3. Start:
+
+   ```bash
+   docker compose --env-file .env.prod -f infra/docker-compose.prod.yml up -d
+   ```
+
+4. Stop:
+
+   ```bash
+   docker compose --env-file .env.prod -f infra/docker-compose.prod.yml down
+   ```
+
+## Production Workflow (GitHub Actions)
+
+Workflow file: `.github/workflows/prod.yml`
+
+- On push to `main`: build and push all service images to GHCR with tags:
+  - `sha-<commit_sha>`
+  - `latest`
+- Manual deploy: run the workflow with `deploy=true` to deploy over SSH.
+
+Required repository secrets:
+
+- `DEPLOY_HOST`
+- `DEPLOY_USER`
+- `DEPLOY_SSH_KEY`
+- `DEPLOY_PORT` (optional, defaults to `22`)
+- `DEPLOY_PATH` (absolute path on server where repo and `.env.prod` exist)
+
 ## Runbook 6 Lenh
 
 Use these commands to avoid missing-env issues.
