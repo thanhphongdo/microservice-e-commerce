@@ -136,6 +136,8 @@ services:
     environment:
       NODE_ENV: production
       PORT: 3000
+      GRAPHQL_INTROSPECTION: ${GRAPHQL_INTROSPECTION:-true}
+      GRAPHQL_PLAYGROUND: ${GRAPHQL_PLAYGROUND:-true}
       AUTH_GRPC_URL: auth-service:50051
       PAYMENT_GRPC_URL: payment-service:50052
       ORDER_GRPC_URL: order-service:50053

@@ -24,6 +24,7 @@ COPY --from=builder /workspace/product-service/dist ./dist
 COPY --from=builder /workspace/proto-contracts/package*.json /usr/src/proto-contracts/
 COPY --from=builder /workspace/proto-contracts/dist /usr/src/proto-contracts/dist
 COPY --from=builder /workspace/proto-contracts/proto /usr/src/proto-contracts/proto
+COPY --from=builder /workspace/proto-contracts/node_modules /usr/src/proto-contracts/node_modules
 
 EXPOSE 50054
 

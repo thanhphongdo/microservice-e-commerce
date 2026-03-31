@@ -11,8 +11,10 @@ import { GatewayService } from './gateway.service';
   imports: [
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
-      autoSchemaFile: join(process.cwd(), 'src/schema.gql'),
-      playground: true,
+      // Keep schema generation in-memory for containerized production runtime.
+      autoSchemaFile: true,
+      introspection: process.env.GRAPHQL_INTROSPECTION !== 'false',
+      playground: process.env.GRAPHQL_PLAYGROUND !== 'false',
     }),
     ClientsModule.register([
       {
