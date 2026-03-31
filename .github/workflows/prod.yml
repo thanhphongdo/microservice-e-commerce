@@ -36,15 +36,15 @@ jobs:
       matrix:
         include:
           - service: auth-service
-            context: auth-service
+            dockerfile: auth-service/Dockerfile.prod
           - service: payment-service
-            context: payment-service
+            dockerfile: payment-service/Dockerfile.prod
           - service: order-service
-            context: order-service
+            dockerfile: order-service/Dockerfile.prod
           - service: product-service
-            context: product-service
+            dockerfile: product-service/Dockerfile.prod
           - service: bff-gateway
-            context: bff-gateway
+            dockerfile: bff-gateway/Dockerfile.prod
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -71,8 +71,8 @@ jobs:
       - name: Build and push image
         uses: docker/build-push-action@v6
         with:
-          context: ${{ matrix.context }}
-          file: ${{ matrix.context }}/Dockerfile
+          context: .
+          file: ${{ matrix.dockerfile }}
           push: true
           platforms: linux/amd64,linux/arm64
           tags: |

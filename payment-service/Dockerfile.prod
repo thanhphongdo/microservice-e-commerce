@@ -1,0 +1,27 @@
+FROM node:24-alpine AS builder
+
+WORKDIR /workspace/proto-contracts
+COPY proto-contracts/package*.json ./
+COPY proto-contracts/tsconfig.json ./
+COPY proto-contracts/proto ./proto
+COPY proto-contracts/src ./src
+RUN npm ci && npm run build
+
+WORKDIR /workspace/payment-service
+COPY payment-service/package*.json ./
+RUN npm ci
+COPY payment-service/. ./
+RUN npm run build && npm prune --omit=dev
+
+FROM node:24-alpine AS runner
+
+WORKDIR /usr/src/app
+ENV NODE_ENV=production
+
+COPY --from=builder /workspace/payment-service/package*.json ./
+COPY --from=builder /workspace/payment-service/node_modules ./node_modules
+COPY --from=builder /workspace/payment-service/dist ./dist
+
+EXPOSE 50052
+
+CMD ["node", "dist/main"]

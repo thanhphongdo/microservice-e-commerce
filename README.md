@@ -78,6 +78,7 @@ Workflow file: `.github/workflows/prod.yml`
 - On push to `main`: build and push all service images to GHCR and Docker Hub with tags:
   - `sha-<commit_sha>`
   - `latest`
+- Production images are built from `Dockerfile.prod` (multi-stage), run `npm run build` at build time, and start with `node dist/main` (no `start:debug`).
 - Manual deploy: run the workflow with `deploy=true` to deploy over SSH.
 
 Required repository secrets:
