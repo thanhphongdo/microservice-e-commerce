@@ -21,6 +21,9 @@ ENV NODE_ENV=production
 COPY --from=builder /workspace/product-service/package*.json ./
 COPY --from=builder /workspace/product-service/node_modules ./node_modules
 COPY --from=builder /workspace/product-service/dist ./dist
+COPY --from=builder /workspace/proto-contracts/package*.json /usr/src/proto-contracts/
+COPY --from=builder /workspace/proto-contracts/dist /usr/src/proto-contracts/dist
+COPY --from=builder /workspace/proto-contracts/proto /usr/src/proto-contracts/proto
 
 EXPOSE 50054
 
