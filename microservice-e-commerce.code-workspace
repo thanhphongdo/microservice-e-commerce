@@ -21,6 +21,14 @@
       "path": "bff-gateway"
     },
     {
+      "name": "e-commerce-fe",
+      "path": "e-commerce-fe"
+    },
+    {
+      "name": "e-commerce-admin-fe",
+      "path": "e-commerce-admin-fe"
+    },
+    {
       "name": "infra",
       "path": "infra"
     },

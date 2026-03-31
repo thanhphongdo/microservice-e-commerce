@@ -1,0 +1,6 @@
+query GetStatuses {
+  servicesStatus {
+    service
+    status
+  }
+}

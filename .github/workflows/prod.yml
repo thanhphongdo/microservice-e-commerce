@@ -11,6 +11,8 @@ on:
       - "order-service/**"
       - "product-service/**"
       - "bff-gateway/**"
+      - "e-commerce-fe/**"
+      - "e-commerce-admin-fe/**"
       - "infra/docker-compose.prod.yml"
   workflow_dispatch:
     inputs:
@@ -59,6 +61,10 @@ jobs:
               - 'product-service/**'
             bff_gateway:
               - 'bff-gateway/**'
+            e_commerce_fe:
+              - 'e-commerce-fe/**'
+            e_commerce_admin_fe:
+              - 'e-commerce-admin-fe/**'
 
       - name: Build matrix
         id: matrix
@@ -73,6 +79,8 @@ jobs:
               { service: 'order-service', dockerfile: 'order-service/Dockerfile.prod' },
               { service: 'product-service', dockerfile: 'product-service/Dockerfile.prod' },
               { service: 'bff-gateway', dockerfile: 'bff-gateway/Dockerfile.prod' },
+              { service: 'e-commerce-fe', dockerfile: 'e-commerce-fe/Dockerfile.prod' },
+              { service: 'e-commerce-admin-fe', dockerfile: 'e-commerce-admin-fe/Dockerfile.prod' },
             ];
 
             let include = [];
@@ -85,7 +93,9 @@ jobs:
                   || '${{ steps.filter.outputs.payment_service }}' === 'true' && key === 'payment-service'
                   || '${{ steps.filter.outputs.order_service }}' === 'true' && key === 'order-service'
                   || '${{ steps.filter.outputs.product_service }}' === 'true' && key === 'product-service'
-                  || '${{ steps.filter.outputs.bff_gateway }}' === 'true' && key === 'bff-gateway';
+                  || '${{ steps.filter.outputs.bff_gateway }}' === 'true' && key === 'bff-gateway'
+                  || '${{ steps.filter.outputs.e_commerce_fe }}' === 'true' && key === 'e-commerce-fe'
+                  || '${{ steps.filter.outputs.e_commerce_admin_fe }}' === 'true' && key === 'e-commerce-admin-fe';
                 if (changed) include.push(item);
               }
             }
@@ -108,9 +118,6 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Set up QEMU (multi-arch)
-        uses: docker/setup-qemu-action@v3
-
       - name: Login to GHCR
         uses: docker/login-action@v3
         with:
@@ -130,7 +137,7 @@ jobs:
           context: .
           file: ${{ matrix.dockerfile }}
           push: true
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64
           tags: |
             ghcr.io/${{ github.repository_owner }}/${{ matrix.service }}:sha-${{ github.sha }}
             ghcr.io/${{ github.repository_owner }}/${{ matrix.service }}:latest

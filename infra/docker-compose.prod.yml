@@ -45,6 +45,34 @@ services:
     networks:
       - backend
 
+  meilisearch:
+    image: getmeili/meilisearch:v1.13
+    restart: unless-stopped
+    environment:
+      MEILI_MASTER_KEY: ${MEILI_MASTER_KEY}
+      MEILI_ENV: production
+    ports:
+      - "${MEILI_PUBLIC_PORT:-17700}:7700"
+    volumes:
+      - meili_data:/meili_data
+    networks:
+      - backend
+
+  minio:
+    image: minio/minio:RELEASE.2025-01-20T14-49-07Z
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    command: server /data --console-address ":9001"
+    ports:
+      - "${MINIO_API_PUBLIC_PORT:-19000}:9000"
+      - "${MINIO_CONSOLE_PUBLIC_PORT:-19001}:9001"
+    volumes:
+      - minio_data:/data
+    networks:
+      - backend
+
   auth-service:
     image: ${AUTH_IMAGE:-docker.io/phongdosw/auth-service:latest}
     restart: unless-stopped
@@ -136,6 +164,7 @@ services:
     environment:
       NODE_ENV: production
       PORT: 3000
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3700,http://localhost:3800}
       GRAPHQL_INTROSPECTION: ${GRAPHQL_INTROSPECTION:-true}
       GRAPHQL_PLAYGROUND: ${GRAPHQL_PLAYGROUND:-true}
       AUTH_GRPC_URL: auth-service:50051
@@ -152,9 +181,37 @@ services:
     networks:
       - backend
 
+  e-commerce-fe:
+    image: ${FE_IMAGE:-docker.io/phongdosw/e-commerce-fe:latest}
+    restart: unless-stopped
+    depends_on:
+      - bff-gateway
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_GRAPHQL_URL: ${NEXT_PUBLIC_GRAPHQL_URL:-http://localhost:${BFF_PUBLIC_PORT:-3000}/graphql}
+    ports:
+      - "${FE_PUBLIC_PORT:-3700}:3700"
+    networks:
+      - backend
+
+  e-commerce-admin-fe:
+    image: ${ADMIN_FE_IMAGE:-docker.io/phongdosw/e-commerce-admin-fe:latest}
+    restart: unless-stopped
+    depends_on:
+      - bff-gateway
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_GRAPHQL_URL: ${ADMIN_NEXT_PUBLIC_GRAPHQL_URL:-http://localhost:${BFF_PUBLIC_PORT:-3000}/graphql}
+    ports:
+      - "${ADMIN_FE_PUBLIC_PORT:-3800}:3800"
+    networks:
+      - backend
+
 networks:
   backend:
 
 volumes:
   postgres_data:
   redis_data:
+  meili_data:
+  minio_data:

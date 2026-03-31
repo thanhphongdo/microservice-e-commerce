@@ -1,0 +1,7 @@
+projects:
+  e-commerce-fe:
+    schema: "http://localhost:13000/graphql"
+    documents: "e-commerce-fe/src/graphql/**/*.graphql"
+  e-commerce-admin-fe:
+    schema: "http://localhost:13000/graphql"
+    documents: "e-commerce-admin-fe/src/graphql/**/*.graphql"
