@@ -45,33 +45,27 @@ Local development standard: use `.env.local` as the single source of truth for D
 `infra/docker-compose.prod.yml` is for production-like deployment with prebuilt images.
 It does not mount source code and does not expose internal gRPC/debug ports.
 
-1. Prepare a production env file (example: `.env.prod`) with at least:
+1. Create production env file from template:
 
    ```bash
-   POSTGRES_USER=postgres
-   POSTGRES_PASSWORD=replace-me
-   POSTGRES_DB=ecommerce
-   AUTH_IMAGE=ghcr.io/your-org/auth-service:latest
-   PAYMENT_IMAGE=ghcr.io/your-org/payment-service:latest
-   ORDER_IMAGE=ghcr.io/your-org/order-service:latest
-   PRODUCT_IMAGE=ghcr.io/your-org/product-service:latest
-   BFF_IMAGE=ghcr.io/your-org/bff-gateway:latest
-   BFF_PUBLIC_PORT=3000
+   cp .env.prod.example .env.prod
    ```
 
-2. Validate config:
+2. Update secret values in `.env.prod` (especially `POSTGRES_PASSWORD`) and adjust image tags if needed.
+
+3. Validate config:
 
    ```bash
    docker compose --env-file .env.prod -f infra/docker-compose.prod.yml config
    ```
 
-3. Start:
+4. Start:
 
    ```bash
    docker compose --env-file .env.prod -f infra/docker-compose.prod.yml up -d
    ```
 
-4. Stop:
+5. Stop:
 
    ```bash
    docker compose --env-file .env.prod -f infra/docker-compose.prod.yml down
